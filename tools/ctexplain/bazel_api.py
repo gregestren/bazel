@@ -84,12 +84,17 @@ class BazelApi():
       return (False, stderr, ())
 
     cts = []
+    # TODO(gregce): cquery should return sets of targets and mostly does. But
+    # certain targets might repeat. This line was added in response to a build
+    # that showed @local_config_cc//:toolchain appearing twice.
+    seen_cts = set()
     for line in stdout:
       if not line.strip():
         continue
       ctinfo = _parse_cquery_result_line(line)
-      if ctinfo is not None:
+      if ctinfo is not None and ctinfo not in seen_cts:
         cts.append(ctinfo)
+        seen_cts.add(ctinfo)
 
     return (True, stderr, tuple(cts))
 

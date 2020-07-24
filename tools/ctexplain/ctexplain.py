@@ -51,7 +51,7 @@ FLAGS = flags.FLAGS
 # (implementation(cts: Tuple[ConfiguredTarget, ...]), descriptive help text).
 analyses = {
     "summary": (
-        lambda x: summary.report(summary.analyze(x)),
+        lambda x, y: summary.report(summary.analyze(x, y)),
         "summarizes build graph size and how trimming could help"
     ),
     "culprits": (
@@ -133,8 +133,9 @@ def main(argv):
   build_desc = ",".join(labels)
   with util.ProgressStep(f"Collecting configured targets for {build_desc}"):
     cts = lib.analyze_build(bazel_api.BazelApi(), labels, build_flags)
+  trimmed_cts = lib.trim_configured_targets(cts)
   for analysis in FLAGS.analysis:
-    analyses[analysis][0](cts)
+    analyses[analysis][0](cts, trimmed_cts)
 
 
 if __name__ == "__main__":
