@@ -47,9 +47,10 @@ def analyze(
   """Runs the analysis.
 
   Args:
-    cts: A build's untrimmed configured targets
-    trimmed_cts The equivalent trimmed cts, where each map entry maps a trimmed
+    cts: A build's untrimmed configured targets.
+    trimmed_cts: The equivalent trimmed cts, where each map entry maps a trimmed
       ct to the untrimmed cts that reduce to it.
+
   Returns:
     Analysis result as a _Summary.
   """
@@ -78,9 +79,9 @@ def report(result: _Summary):
   """
   ct_surplus = util.percent_diff(result.targets, result.configured_targets)
   trimmed_ct_surplus = util.percent_diff(result.targets,
-      result.trimmed_configured_targets)
+                                         result.trimmed_configured_targets)
   trimming_reduction = util.percent_diff(result.configured_targets,
-      result.trimmed_configured_targets)
+                                         result.trimmed_configured_targets)
   print(f"""
 Configurations: {result.configurations}
 Targets: {result.targets}
