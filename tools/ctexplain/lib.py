@@ -150,8 +150,8 @@ def _get_required_fragments(ct: ConfiguredTarget) -> Set[str]:
 # CoreOptions entries that should always be trimmed because they change with
 # configuration changes but don't actually cause those changes.
 _trimmable_core_options = (
-  "affected by starlark transition",
-  "transition directory name fragment",
+    "affected by starlark transition",
+    "transition directory name fragment",
 )
 
 
@@ -172,14 +172,14 @@ def _trim_configured_target(ct: ConfiguredTarget,
     # CoreOptions are universally included with no owning fragments.
     if options_class == "CoreOptions":
       trimmed_options[options_class] = frozendict({
-          k: v for k,v in options.items() if k not in _trimmable_core_options
+          k: v for k, v in options.items() if k not in _trimmable_core_options
       })
     elif options_class == "user-defined":
       # Include each user-defined option on a case-by-case basis, since
       # user-defined requirements are declared directly on each option.
       trimmed_options["user-defined"] = frozendict({
           name: val
-          for name,val in ct.config.options["user-defined"].items()
+          for name, val in ct.config.options["user-defined"].items()
           if name in required_fragments
       })
     else:

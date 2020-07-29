@@ -13,16 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests expected results over actual builds."""
-import os
-import unittest
 from typing import Mapping
 from typing import Tuple
+import unittest
 
 from src.test.py.bazel import test_base
 import tools.ctexplain.analyses.summary as summary
 import tools.ctexplain.bazel_api as bazel_api
 import tools.ctexplain.lib as lib
 from tools.ctexplain.types import ConfiguredTarget
+
+Cts = Tuple[ConfiguredTarget, ...]
+TrimmedCts = Mapping[ConfiguredTarget, Cts]
 
 
 class IntegrationTest(test_base.TestBase):
@@ -40,15 +42,11 @@ class IntegrationTest(test_base.TestBase):
         '    packages = ["//..."])',
     ])
 
-
   def tearDown(self):
     test_base.TestBase.tearDown(self)
 
-  Cts = Tuple[ConfiguredTarget, ...]
-  TrimmedCtMap = Mapping[ConfiguredTarget, Cts]
-
   def _get_cts(self, labels: Tuple[str, ...],
-               build_flags: Tuple[str, ...]) -> Tuple[Cts, TrimmedCtMap]:
+               build_flags: Tuple[str, ...]) -> Tuple[Cts, TrimmedCts]:
     """Returns a build's configured targets.
 
     Args:
@@ -63,7 +61,6 @@ class IntegrationTest(test_base.TestBase):
     cts = lib.analyze_build(self._bazel_api, labels, build_flags)
     trimmed_cts = lib.trim_configured_targets(cts)
     return (cts, trimmed_cts)
-
 
   # Simple example of a build where trimming makes a big diffrence.
   #
@@ -99,9 +96,7 @@ splitter_rule = rule(
         "cfg1_deps": attr.label_list(),
         "cfg2_deps": attr.label_list(cfg = _my_transition),
     },
-)'''
-    ])
-
+)'''])
     self.ScratchFile('testapp/BUILD', ['''
 load(":defs.bzl", "simple_rule", "splitter_rule")
 simple_rule(
@@ -114,8 +109,7 @@ splitter_rule(
     cfg1_deps = [":dep1"],
     cfg2_deps = [":dep1"],
 )
-'''
-    ])
+'''])
     cts, trimmed_cts = self._get_cts(('//testapp:buildme',), ())
     stats = summary.analyze(cts, trimmed_cts)
     self.assertEqual(stats.configurations, 3)
