@@ -18,6 +18,7 @@ from typing import Mapping
 from typing import Set
 from typing import Tuple
 
+from frozendict import frozendict
 import tools.ctexplain.bazel_api as bazel_api
 from tools.ctexplain.types import Configuration
 from tools.ctexplain.types import ConfiguredTarget
@@ -64,7 +65,8 @@ def analyze_build(bazel: bazel_api.BazelApi, labels: Tuple[str, ...],
   return tuple(cts_with_configs)
 
 
-def trim_configured_targets(cts: Tuple[ConfiguredTarget, ...]
+def trim_configured_targets(
+    cts: Tuple[ConfiguredTarget, ...]
     ) -> Mapping[ConfiguredTarget, Tuple[ConfiguredTarget, ...]]:
   """Trims a set of configured targets to only include needed fragments.
 
@@ -80,7 +82,7 @@ def trim_configured_targets(cts: Tuple[ConfiguredTarget, ...]
   not the Java fragment. It includes --define foo=bar if it has a select() on
   --foo (or the "$(foo)" Make variable in one of its attributes), otherwise it
   drops it. And so on.
-  
+
   Args:
     cts: Set of configured targets, which may or may not be trimmed.
 
@@ -89,7 +91,7 @@ def trim_configured_targets(cts: Tuple[ConfiguredTarget, ...]
     configured targets that reduce to it. For example, if a cc_binary adopts
     two configurations that only differ in their Java options, the trimmed
     variations are equivalent.
-    """
+  """
   ans = {}
   for ct in cts:
     trimmed_ct = _trim_configured_target(ct, _get_required_fragments(ct))
@@ -123,7 +125,7 @@ def _get_required_fragments(ct: ConfiguredTarget) -> Set[str]:
   Returns:
     Set of required configuration pieces.
   """
-  if not ct.config.fragments: # Null configurations are already empty.
+  if not ct.config.fragments:  # Null configurations are already empty.
     return set()
   if not _options_to_fragments:
     for fragment, options_fragments in ct.config.fragments.items():
@@ -139,10 +141,18 @@ def _get_required_fragments(ct: ConfiguredTarget) -> Set[str]:
       fragments = _options_to_fragments[req]
       matches = [(len(ct.config.fragments[frag]), frag) for frag in fragments]
       # TODO(gregce): scan for existing fulfilling fragment, prefer that.
-      ans.append(sorted(matches)[0][1]) # Each entry sorted by count, then name.
+      ans.append(sorted(matches)[0][1])  # Sort each entry by count, then name.
     else:
       raise ValueError(f"{ct.label}: don't understand requirement {req}")
   return set(ans)
+
+
+# CoreOptions entries that should always be trimmed because they change with
+# configuration changes but don't actually cause those changes.
+_trimmable_core_options = (
+  "affected by starlark transition",
+  "transition directory name fragment",
+)
 
 
 def _trim_configured_target(ct: ConfiguredTarget,
@@ -159,15 +169,25 @@ def _trim_configured_target(ct: ConfiguredTarget,
   """
   trimmed_options = {}
   for (options_class, options) in ct.config.options.items():
+    # CoreOptions are universally included with no owning fragments.
     if options_class == "CoreOptions":
-      trimmed_options[options_class] = options
+      trimmed_options[options_class] = frozendict({
+          k: v for k,v in options.items() if k not in _trimmable_core_options
+      })
     elif options_class == "user-defined":
-      pass
+      # Include each user-defined option on a case-by-case basis, since
+      # user-defined requirements are declared directly on each option.
+      trimmed_options["user-defined"] = frozendict({
+          name: val
+          for name,val in ct.config.options["user-defined"].items()
+          if name in required_fragments
+      })
     else:
       associated_fragments = set(_options_to_fragments[options_class])
       if associated_fragments & required_fragments:
         trimmed_options[options_class] = options
 
-  trimmed_config = Configuration(ct.config.fragments, trimmed_options)
+  trimmed_config = Configuration(ct.config.fragments,
+                                 frozendict(trimmed_options))
   return ConfiguredTarget(
       ct.label, trimmed_config, "trimmed hash", ct.transitive_fragments)
