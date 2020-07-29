@@ -126,6 +126,85 @@ class LibTest(test_base.TestBase):
     self.assertEqual(get_foo_opt(trimmed_cts[1][0]), 'foo_val2')
     self.assertListEqual(trimmed_cts[1][1], [ct2])
 
+  # Requirements are FragmentOptions, not Fragments.
+  def testTrimRequiredOptions(self):
+    config = Configuration(
+        fragments=frozendict({
+            'FooFragment': ('FooOptions',),
+            'BarFragment': ('BarOptions',),
+            'GreedyFragment': ('FooOptions', 'BarOptions'),
+        }),
+        options=frozendict({
+            'FooOptions': frozendict({'foo_opt': 'foo_val'}),
+            'BarOptions': frozendict({'bar_opt': 'bar_val'}),
+        })
+    )
+
+    ct = ConfiguredTarget('//foo', config, 'hash', ('FooOptions',))
+    trimmed_cts = lib.trim_configured_targets((ct,))
+    trimmed_ct = list(trimmed_cts.keys())[0]
+
+    self.assertEqual(len(trimmed_cts), 1)
+    # Currently expect to keep the requiring fragment (of all that require
+    # 'FooOptions') with the smallest number of total requirements.
+    self.assertTupleEqual(tuple(trimmed_ct.config.fragments.keys()),
+                          ('FooFragment',))
+    self.assertEqual(trimmed_ct.config.options,
+                     frozendict(
+                         {'FooOptions': frozendict({'foo_opt': 'foo_val'})}
+                     ))
+
+  def testTrimUserDefinedFlags(self):
+    config = Configuration(
+        fragments=frozendict({'FooFragment': ('FooOptions',)}),
+        options=frozendict({
+            'FooOptions': frozendict({}),
+            'user-defined': frozendict({
+                '--define:foo': 'foo_val',
+                '--define:bar': 'bar_val',
+                '--//starlark_foo_flag': 'starlark_foo',
+                '--//starlark_bar_flag': 'starlark_bar',
+            }),
+        })
+    )
+
+    required = ('FooFragment', '--define:foo', '--//starlark_bar_flag')
+    ct = ConfiguredTarget('//foo', config, 'hash', required)
+    trimmed_cts = lib.trim_configured_targets((ct,))
+    trimmed_ct = list(trimmed_cts.keys())[0]
+
+    self.assertEqual(len(trimmed_cts), 1)
+    self.assertTupleEqual(tuple(trimmed_ct.config.fragments.keys()),
+                          ('FooFragment',))
+    self.assertEqual(trimmed_ct.config.options,
+                     frozendict({
+                         'FooOptions': frozendict({}),
+                         'user-defined': frozendict({
+                             '--define:foo': 'foo_val',
+                             '--//starlark_bar_flag': 'starlark_bar',
+                         }),
+                     }))
+
+  def testTrimUnnecessaryCoreOptions(self):
+    config = Configuration(
+        fragments=frozendict({}),
+        options=frozendict({
+            'CoreOptions': frozendict({
+                'affected by starlark transition': 'drop this',
+                'keep this': 'keep val',
+                'transition directory name fragment': 'drop this too',
+            })
+        }))
+
+    ct = ConfiguredTarget('//foo', config, 'hash', ())
+    trimmed_cts = lib.trim_configured_targets((ct,))
+    trimmed_ct = list(trimmed_cts.keys())[0]
+
+    self.assertEqual(len(trimmed_cts), 1)
+    self.assertEqual(trimmed_ct.config.options,
+                     frozendict({
+                         'CoreOptions': frozendict({'keep this': 'keep val'}),
+                     }))
 
 if __name__ == '__main__':
   unittest.main()

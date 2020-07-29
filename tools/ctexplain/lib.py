@@ -117,7 +117,7 @@ def _get_required_fragments(ct: ConfiguredTarget) -> Set[str]:
       CppOptions. So heuristically choose the one requiring the smallest total
       number of option fragments to try to be as granular as possible.
     - If a target consumes --define foo=? anywhere, return "--define foo".
-    - If a target consumes a STarlark flag, return that flag's label.
+    - If a target consumes a Starlark flag, return that flag's label.
 
   Args:
     ct: Untrimmed configured target.
@@ -165,7 +165,8 @@ def _trim_configured_target(ct: ConfiguredTarget,
       as reported by _get_required_fragments.
 
   Returns:
-    Trimmed copy of the configured target.
+    Trimmed copy of the configured target. Both config.fragments and
+    config.options are suitably trimmed.
   """
   trimmed_options = {}
   for (options_class, options) in ct.config.options.items():
@@ -187,7 +188,10 @@ def _trim_configured_target(ct: ConfiguredTarget,
       if associated_fragments & required_fragments:
         trimmed_options[options_class] = options
 
-  trimmed_config = Configuration(ct.config.fragments,
-                                 frozendict(trimmed_options))
+  trimmed_fragments = frozendict({
+      fragment: options for fragment, options in ct.config.fragments.items()
+      if fragment in required_fragments
+  })
+  trimmed_config = Configuration(trimmed_fragments, frozendict(trimmed_options))
   return ConfiguredTarget(
       ct.label, trimmed_config, "trimmed hash", ct.transitive_fragments)
