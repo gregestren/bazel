@@ -65,8 +65,8 @@ class IntegrationTest(test_base.TestBase):
   # Simple example of a build where trimming makes a big diffrence.
   #
   # Building ":split" builds ":dep1" and its subgraph in two distinct
-  # configurations: one with --python_version="PY2" (the default) and
-  # one with --python_version="PY3".
+  # configurations: one with --build_python_zip="auto" (the default) and
+  # one with --build_python_zip="True".
   #
   # None of these rules need the Python configuration. So they should
   # all be reducible to the same trimmed equivalent.
@@ -80,11 +80,11 @@ simple_rule = rule(
 )
 
 def _my_transition_impl(settings, attr):
-    return {"//command_line_option:python_version": "PY3"}
+    return {"//command_line_option:build_python_zip": "True"}
 _my_transition = transition(
     implementation = _my_transition_impl,
     inputs = [],
-    outputs = ["//command_line_option:python_version"],
+    outputs = ["//command_line_option:build_python_zip"],
 )
 
 splitter_rule = rule(

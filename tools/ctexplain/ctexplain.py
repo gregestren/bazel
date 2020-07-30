@@ -40,7 +40,11 @@ from typing import Tuple
 from absl import app
 from absl import flags
 
+import tools.ctexplain.analyses.clones as clones
+import tools.ctexplain.analyses.culprits as culprits
+import tools.ctexplain.analyses.forks as forks
 import tools.ctexplain.analyses.summary as summary
+import tools.ctexplain.analyses.trimmed_forks as trimmed_forks
 import tools.ctexplain.bazel_api as bazel_api
 import tools.ctexplain.lib as lib
 import tools.ctexplain.util as util
@@ -51,25 +55,30 @@ FLAGS = flags.FLAGS
 # (implementation(cts: Tuple[ConfiguredTarget, ...]), descriptive help text).
 analyses = {
     "summary": (
-        lambda x, y: summary.report(summary.analyze(x, y)),
+        lambda cts, trimmed: summary.report(summary.analyze(cts, trimmed)),
         "summarizes build graph size and how trimming could help"
     ),
     "culprits": (
-        lambda x: print("this analysis not yet implemented"),
+        lambda cts, trimmed: culprits.report(culprits.analyze(trimmed)),
         "shows which flags unnecessarily fork configured targets. These\n"
         + "are conceptually mergeable."
     ),
     "forked_targets": (
-        lambda x: print("this analysis not yet implemented"),
+        lambda cts, trimmed: forks.report(forks.analyze(cts)),
         "ranks targets by how many configured targets they\n"
         + "create. These may be legitimate forks (because they behave "
         + "differently with\n different flags) or identical clones that are "
         + "conceptually mergeable."
     ),
     "cloned_targets": (
-        lambda x: print("this analysis not yet implemented"),
+        lambda cts, trimmed: clones.report(clones.analyze(trimmed)),
         "ranks targets by how many behavior-identical configured\n targets "
         + "they produce. These are conceptually mergeable."
+    ),
+    "trimmed_forks": (
+        lambda c, trimmed: trimmed_forks.report(trimmed_forks.analyze(trimmed)),
+        "ranks targets by how many configured targets they produce\n in an "
+        + "optimally trimmed graph"
     )
 }
 
@@ -135,7 +144,9 @@ def main(argv):
     cts = lib.analyze_build(bazel_api.BazelApi(), labels, build_flags)
   trimmed_cts = lib.trim_configured_targets(cts)
   for analysis in FLAGS.analysis:
+    print(f"{analysis.title()} analysis:")
     analyses[analysis][0](cts, trimmed_cts)
+    print()
 
 
 if __name__ == "__main__":

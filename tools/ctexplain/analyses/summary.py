@@ -82,11 +82,10 @@ def report(result: _Summary):
                                          result.trimmed_configured_targets)
   trimming_reduction = util.percent_diff(result.configured_targets,
                                          result.trimmed_configured_targets)
-  print(f"""
-Configurations: {result.configurations}
-Targets: {result.targets}
-Configured targets: {result.configured_targets} ({ct_surplus} vs. targets)
-Targets with multiple configs: {result.repeated_targets}
-Configured targets with optimal trimming: {result.trimmed_configured_targets} ({trimmed_ct_surplus} vs. targets)
-Trimming impact on configured target graph size: {trimming_reduction}
-""")
+  print(
+      f""" - configurations: {result.configurations}
+ - targets: {result.targets}
+ - configured targets: {result.configured_targets} ({ct_surplus} vs. targets)
+ - targets with multiple configs: {result.repeated_targets}
+ - configured targets with optimal trimming: {result.trimmed_configured_targets} ({trimmed_ct_surplus} vs. targets)
+ - trimming impact on configured target graph size: {trimming_reduction}""")

@@ -162,8 +162,8 @@ class LibTest(test_base.TestBase):
             'user-defined': frozendict({
                 '--define:foo': 'foo_val',
                 '--define:bar': 'bar_val',
-                '--//starlark_foo_flag': 'starlark_foo',
-                '--//starlark_bar_flag': 'starlark_bar',
+                '//starlark_foo_flag': 'starlark_foo',
+                '//starlark_bar_flag': 'starlark_bar',
             }),
         })
     )

@@ -43,7 +43,13 @@ py_library(
 
 py_library(
     name = "analyses",
-    srcs = ["analyses/summary.py"],
+    srcs = [
+        "analyses/clones.py",
+        "analyses/culprits.py",
+        "analyses/forks.py",
+        "analyses/summary.py",
+        "analyses/trimmed_forks.py",
+    ],
     srcs_version = "PY3ONLY",
     deps = [":base"],
 )
