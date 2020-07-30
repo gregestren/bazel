@@ -168,7 +168,7 @@ class LibTest(test_base.TestBase):
         })
     )
 
-    required = ('FooFragment', '--define:foo', '--//starlark_bar_flag')
+    required = ('FooFragment', '--define:foo', '//starlark_bar_flag')
     ct = ConfiguredTarget('//foo', config, 'hash', required)
     trimmed_cts = lib.trim_configured_targets((ct,))
     trimmed_ct = list(trimmed_cts.keys())[0]
@@ -181,7 +181,7 @@ class LibTest(test_base.TestBase):
                          'FooOptions': frozendict({}),
                          'user-defined': frozendict({
                              '--define:foo': 'foo_val',
-                             '--//starlark_bar_flag': 'starlark_bar',
+                             '//starlark_bar_flag': 'starlark_bar',
                          }),
                      }))
 
