@@ -70,7 +70,10 @@ final class TestResultAggregator {
   private final Map<Artifact, TestResult> statusMap = new HashMap<>();
 
   public TestResultAggregator(
-      ConfiguredTarget target, BuildConfiguration configuration, AggregationPolicy policy) {
+      ConfiguredTarget target,
+      BuildConfiguration configuration,
+      AggregationPolicy policy,
+      boolean skippedTest) {
     this.testTarget = target;
     this.policy = policy;
 
@@ -83,6 +86,7 @@ final class TestResultAggregator {
       this.summary.setConfiguration(configuration);
     }
     this.summary.setStatus(BlazeTestStatus.NO_STATUS);
+    this.summary.setSkipped(skippedTest);
     this.remainingRuns = new HashSet<>(TestProvider.getTestStatusArtifacts(target));
   }
 

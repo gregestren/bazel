@@ -34,6 +34,7 @@ import javax.annotation.concurrent.Immutable;
 public class TestFilteringCompleteEvent {
   private final Collection<ConfiguredTarget> targets;
   private final Collection<ConfiguredTarget> testTargets;
+  private final Collection<ConfiguredTarget> skippedTests;
   private final Map<BuildConfigurationValue.Key, BuildConfiguration> configurationMap;
 
   /**
@@ -46,9 +47,11 @@ public class TestFilteringCompleteEvent {
   public TestFilteringCompleteEvent(
       Collection<? extends ConfiguredTarget> targets,
       Collection<? extends ConfiguredTarget> testTargets,
+      Collection<? extends ConfiguredTarget> targetsToSkip,
       Map<BuildConfigurationValue.Key, BuildConfiguration> configurationMap) {
     this.targets = ImmutableList.copyOf(targets);
     this.testTargets = testTargets == null ? null : ImmutableList.copyOf(testTargets);
+    this.skippedTests = ImmutableList.copyOf(targetsToSkip);
     this.configurationMap = configurationMap;
     if (testTargets == null) {
       return;
@@ -72,6 +75,10 @@ public class TestFilteringCompleteEvent {
    */
   public Collection<ConfiguredTarget> getTestTargets() {
     return testTargets;
+  }
+
+  public Collection<ConfiguredTarget> getSkippedTests() {
+    return skippedTests;
   }
 
   public BuildConfiguration getConfigurationForTarget(ConfiguredTarget target) {

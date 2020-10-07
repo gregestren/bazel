@@ -259,6 +259,7 @@ public final class AnalysisPhaseRunner {
             new TestFilteringCompleteEvent(
                 analysisResult.getTargetsToBuild(),
                 analysisResult.getTargetsToTest(),
+                analysisResult.getTargetsToSkip(),
                 configurationMap));
     return analysisResult;
   }

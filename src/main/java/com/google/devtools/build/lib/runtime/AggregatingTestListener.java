@@ -110,7 +110,11 @@ public class AggregatingTestListener {
         continue;
       }
       TestResultAggregator aggregator =
-          new TestResultAggregator(target, event.getConfigurationForTarget(target), policy);
+          new TestResultAggregator(
+              target,
+              event.getConfigurationForTarget(target),
+              policy,
+              event.getSkippedTests().contains(target));
       TestResultAggregator oldAggregator = aggregators.put(asKey(target), aggregator);
       Preconditions.checkState(
           oldAggregator == null, "target: %s, values: %s %s", target, oldAggregator, aggregator);
