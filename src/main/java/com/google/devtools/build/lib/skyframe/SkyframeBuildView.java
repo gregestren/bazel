@@ -63,6 +63,7 @@ import com.google.devtools.build.lib.analysis.config.BuildConfigurationValue;
 import com.google.devtools.build.lib.analysis.config.BuildOptions;
 import com.google.devtools.build.lib.analysis.config.BuildOptions.OptionsDiff;
 import com.google.devtools.build.lib.analysis.config.ConfigConditions;
+import com.google.devtools.build.lib.analysis.config.InvalidConfigurationException;
 import com.google.devtools.build.lib.analysis.config.StarlarkTransitionCache;
 import com.google.devtools.build.lib.analysis.test.AnalysisFailurePropagationException;
 import com.google.devtools.build.lib.bugreport.BugReport;
@@ -84,6 +85,7 @@ import com.google.devtools.build.lib.packages.Target;
 import com.google.devtools.build.lib.packages.TargetUtils;
 import com.google.devtools.build.lib.profiler.Profiler;
 import com.google.devtools.build.lib.profiler.SilentCloseable;
+import com.google.devtools.build.lib.server.FailureDetails.BuildConfiguration.Code;
 import com.google.devtools.build.lib.skyframe.ArtifactConflictFinder.ConflictException;
 import com.google.devtools.build.lib.skyframe.AspectKeyCreator.AspectKey;
 import com.google.devtools.build.lib.skyframe.AspectKeyCreator.TopLevelAspectsKey;
@@ -270,7 +272,8 @@ public final class SkyframeBuildView {
   /** Sets the configuration. Not thread-safe. DO NOT CALL except from tests! */
   @VisibleForTesting
   public void setConfiguration(
-      EventHandler eventHandler, BuildConfigurationValue configuration, int maxDifferencesToShow) {
+      EventHandler eventHandler, BuildConfigurationValue configuration, int maxDifferencesToShow)
+      throws InvalidConfigurationException {
     if (skyframeAnalysisWasDiscarded) {
       eventHandler.handle(
           Event.info(
@@ -280,6 +283,11 @@ public final class SkyframeBuildView {
     } else {
       String diff = describeConfigurationDifference(configuration, maxDifferencesToShow);
       if (diff != null) {
+        if (true) {
+          // Using Code.CONFLICTING_CONFIGURATIONS for example, but for submission we could add a
+          // new code.
+          throw new InvalidConfigurationException("example message", Code.CONFLICTING_CONFIGURATIONS);
+        }
         eventHandler.handle(Event.info(diff + ", discarding analysis cache."));
         // Note that clearing the analysis cache is currently required for correctness. It is also
         // helpful to save memory.
