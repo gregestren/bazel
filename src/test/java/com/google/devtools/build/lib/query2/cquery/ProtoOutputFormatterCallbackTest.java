@@ -719,6 +719,7 @@ public class ProtoOutputFormatterCallbackTest extends ConfiguredTargetQueryTest 
     QueryExpression expression = QueryParser.parse(queryExpression, getDefaultFunctions());
     Set<String> targetPatternSet = new LinkedHashSet<>();
     expression.collectTargetPatterns(targetPatternSet);
+    helper.setQuerySettings(Setting.NO_IMPLICIT_DEPS);
     PostAnalysisQueryEnvironment<CqueryNode> env =
         ((ConfiguredTargetQueryHelper) helper).getPostAnalysisQueryEnvironment(targetPatternSet);
     ByteArrayOutputStream out = new ByteArrayOutputStream();

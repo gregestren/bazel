@@ -89,6 +89,23 @@ public class ConfiguredTargetQueryEnvironment extends PostAnalysisQueryEnvironme
 
   private final ConfiguredTargetAccessor accessor;
 
+  /**
+   * F Stores every configuration in the transitive closure of the build graph as a map from its
+   * user-friendly hash to the configuration itself.
+   *
+   * <p>This is used to find configured targets in, e.g. {@code somepath} queries. Given {@code
+   * somepath(//foo, //bar)}, cquery finds the configured targets for {@code //foo} and {@code
+   * //bar} by creating a {@link ConfiguredTargetKey} from their labels and <i>some</i>
+   * configuration, then querying the {@link WalkableGraph} to find the matching configured target.
+   *
+   * <p>Having this map lets cquery choose from all available configurations in the graph,
+   * particularly including configurations that aren't the top-level.
+   *
+   * <p>This can also be used in cquery's {@code config} function to match against explicitly
+   * specified configs. This, in particular, is where having user-friendly hashes is invaluable.
+   */
+  private final ImmutableMap<String, BuildConfigurationValue> transitiveConfigurations;
+
   @Override
   protected KeyExtractor<CqueryNode, ActionLookupKey> getConfiguredTargetKeyExtractor() {
     return configuredTargetKeyExtractor;
@@ -120,6 +137,8 @@ public class ConfiguredTargetQueryEnvironment extends PostAnalysisQueryEnvironme
         labelPrinter);
     this.accessor = new ConfiguredTargetAccessor(walkableGraphSupplier.get(), this);
     this.configuredTargetKeyExtractor = CqueryNode::getLookupKey;
+    this.transitiveConfigurations =
+        getTransitiveConfigurations(transitiveConfigurationKeys, walkableGraphSupplier.get());
     this.topLevelArtifactContext = topLevelArtifactContext;
   }
 
@@ -338,6 +357,7 @@ public class ConfiguredTargetQueryEnvironment extends PostAnalysisQueryEnvironme
    * <p>If there are no matches, returns an empty list.
    */
   private ImmutableList<CqueryNode> getConfiguredTargetsForLabel(Label label)
+  private ImmutableList<CqueryNode> getConfiguredTargetsForConfigFunction(Label label)
       throws InterruptedException {
     ImmutableList.Builder<CqueryNode> ans = ImmutableList.builder();
     for (BuildConfigurationValue config : transitiveConfigurations.values()) {
