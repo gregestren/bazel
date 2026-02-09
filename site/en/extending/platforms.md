@@ -65,12 +65,16 @@ $ bazel build //:my_linux_app --platforms=//myplatforms:linux_x86
 Organizations generally maintain their own platform definitions because build
 machine setups vary between organizations.
 
-When `--platforms` isn't set, it defaults to `@platforms//host`. This is
-specially defined to auto-detect the host machine's OS and CPU properties so
-builds target the same machine Bazel runs on. Build rules can
-[select](/docs/configurable-attributes) on these properties with the
-[@platforms/os](https://github.com/bazelbuild/platforms/blob/main/os/BUILD) and
-[@platforms/cpu](https://github.com/bazelbuild/platforms/blob/main/cpu/BUILD)
+# Default platform
+
+When `--platforms` isn't set, it defaults to `@platforms//host`. This is a
+specially defined target that auto-detects the host machine's OS and CPU and
+sets its equivalent constraints to match them. This means builds, by default,
+compile for the same machine Bazel runs on.
+
+Build rules can [select](/docs/configurable-attributes) on these properties with
+the  [@platforms/os](https://github.com/bazelbuild/platforms/blob/main/os/BUILD)
+and [@platforms/cpu](https://github.com/bazelbuild/platforms/blob/main/cpu/BUILD)
 constraints.
 
 ## Generally useful constraints and platforms {:#useful-constraints-platforms}
